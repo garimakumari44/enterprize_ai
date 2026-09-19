@@ -73,56 +73,18 @@ from app.api.v1.router import router as api_v1_router
 # PROCESSING
 # ============================================================================
 
-from app.processing.stage_registry import StageRegistry
 
-from app.processing.classification.classifier import (
-    ClassificationStage,
-)
 
-from app.processing.layout.analyzer import (
-    LayoutAnalysisStage,
-)
 
-from app.processing.extraction.manager import (
-    TextExtractionStage,
-)
 
-from app.processing.ocr.manager import (
-    OCRStage,
-)
 
-from app.processing.structure.detector import (
-    StructureDetectionStage,
-)
 
-from app.processing.normalization.cleaner import (
-    CleaningStage,
-)
 
-from app.processing.chunking.chunker import (
-    ChunkingStage,
-)
 
-from app.processing.enrichment.enricher import (
-    MetadataEnrichmentStage,
-)
 
-from app.processing.embeddings.factory import (
-    EmbeddingConfig,
-    create_embedding_service,
-)
 
-from app.processing.embeddings.stage import (
-    EmbeddingStage,
-)
 
-from app.processing.indexing.indexer import (
-    IndexingStage,
-)
 
-from app.processing.indexing.provider import (
-    ProcessingIndexProvider,
-)
 
 
 # ============================================================================
@@ -167,145 +129,14 @@ API_PREFIX = "/api/v1"
 # ============================================================================
 
 
-def create_embedding_stage() -> EmbeddingStage:
-    """
-    Create the application embedding stage.
-
-    Development configuration:
-        Provider: local
-        Model: BAAI/bge-small-en-v1.5
-        Device: CPU
-        Batch size: 32
-    """
-
-    embedding_config = EmbeddingConfig(
-        provider="local",
-        local_model="BAAI/bge-small-en-v1.5",
-        local_device="cpu",
-        local_batch_size=32,
-    )
-
-    embedding_service = create_embedding_service(
-        embedding_config,
-    )
-
-    return EmbeddingStage(
-        embedding_service,
-    )
-
-
 # ============================================================================
 # INDEX PROVIDER
 # ============================================================================
 
 
-def create_index_provider() -> ProcessingIndexProvider:
-    """
-    Create the indexing provider used by the processing pipeline.
-
-    The provider creates request/job-scoped database sessions.
-
-    Canonical chunk table:
-        document_chunks
-
-    Vector table:
-        document_chunk_vectors
-    """
-
-    return ProcessingIndexProvider(
-        provider="pgvector",
-        config={},
-        collection_name="document_chunk_vectors",
-    )
-
-
 # ============================================================================
 # STAGE REGISTRY
 # ============================================================================
-
-
-def create_stage_registry() -> StageRegistry:
-    """
-    Create and configure the application-wide processing
-    StageRegistry.
-    """
-
-    # ------------------------------------------------------------------------
-    # Infrastructure-backed stages
-    # ------------------------------------------------------------------------
-
-    embedding_stage = create_embedding_stage()
-
-    index_provider = create_index_provider()
-
-    # ------------------------------------------------------------------------
-    # Registry
-    # ------------------------------------------------------------------------
-
-    registry = StageRegistry(
-        stages=[
-            # 1. Classification
-            ClassificationStage(),
-
-            # 2. Layout analysis
-            LayoutAnalysisStage(),
-
-            # 3. Text extraction
-            TextExtractionStage(),
-
-            # 4. OCR
-            OCRStage(),
-
-            # 5. Structure detection
-            StructureDetectionStage(),
-
-            # 6. Cleaning / normalization
-            CleaningStage(),
-
-            # 7. Chunking
-            ChunkingStage(),
-
-            # 8. Metadata enrichment
-            MetadataEnrichmentStage(),
-
-            # 9. Embeddings
-            embedding_stage,
-
-            # 10. Indexing
-            IndexingStage(
-                provider=index_provider,
-            ),
-        ],
-    )
-
-    # ------------------------------------------------------------------------
-    # Validate registry
-    # ------------------------------------------------------------------------
-
-    registry.validate()
-
-    registry.validate_pipeline_order()
-
-    # ------------------------------------------------------------------------
-    # Logging
-    # ------------------------------------------------------------------------
-
-    logger.info(
-        "Registered processing stages: %s",
-        registry.registered_stages(),
-    )
-
-    logger.info(
-        "Canonical processing pipeline: %s",
-        registry.pipeline_stages(),
-    )
-
-    logger.info(
-        "Processing pipeline complete: %s",
-        registry.is_complete(),
-    )
-
-    return registry
 
 
 # ============================================================================
@@ -410,41 +241,12 @@ async def lifespan(
         APP_VERSION,
     )
 
-    stage_registry: StageRegistry | None = None
-
     assistant_llm_manager: LLMManager | None = None
 
     try:
         # ====================================================================
         # STARTUP
         # ====================================================================
-
-        # --------------------------------------------------------------------
-        # Processing infrastructure
-        # --------------------------------------------------------------------
-
-        stage_registry = create_stage_registry()
-
-        app.state.stage_registry = stage_registry
-
-        logger.info(
-            "Document processing StageRegistry initialized."
-        )
-
-        logger.info(
-            "Registered processing stages: %s",
-            stage_registry.registered_stages(),
-        )
-
-        logger.info(
-            "Canonical processing pipeline: %s",
-            stage_registry.pipeline_stages(),
-        )
-
-        logger.info(
-            "Processing pipeline is complete: %s",
-            stage_registry.is_complete(),
-        )
 
         # --------------------------------------------------------------------
         # Assistant application-scoped infrastructure
@@ -570,68 +372,6 @@ async def lifespan(
             "assistant_query_router",
         ):
             del app.state.assistant_query_router
-
-        # --------------------------------------------------------------------
-        # Close processing stages
-        # --------------------------------------------------------------------
-
-        if stage_registry is not None:
-            for stage in stage_registry.stages():
-
-                close_method = getattr(
-                    stage,
-                    "close",
-                    None,
-                )
-
-                if close_method is None:
-                    continue
-
-                try:
-                    result = close_method()
-
-                    if hasattr(
-                        result,
-                        "__await__",
-                    ):
-                        await result
-
-                except Exception:
-                    logger.exception(
-                        "Failed to close processing stage '%s'.",
-                        getattr(
-                            stage,
-                            "name",
-                            type(stage).__name__,
-                        ),
-                    )
-
-            # ----------------------------------------------------------------
-            # Clear registry
-            # ----------------------------------------------------------------
-
-            try:
-                stage_registry.clear()
-
-                logger.info(
-                    "Document processing StageRegistry cleared."
-                )
-
-            except Exception:
-                logger.exception(
-                    "Failed to clear StageRegistry during "
-                    "application shutdown."
-                )
-
-        # --------------------------------------------------------------------
-        # Remove processing state
-        # --------------------------------------------------------------------
-
-        if hasattr(
-            app.state,
-            "stage_registry",
-        ):
-            del app.state.stage_registry
 
         logger.info(
             "Application shutdown complete."

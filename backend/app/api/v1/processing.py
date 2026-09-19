@@ -45,10 +45,8 @@ from uuid import UUID
 
 from fastapi import (
     APIRouter,
-    BackgroundTasks,
     Depends,
     HTTPException,
-    Request,
     status,
 )
 from pydantic import BaseModel, Field
@@ -63,8 +61,8 @@ from app.db.models.document_intelligence_result import (
 from app.db.models.extracted_field import ExtractedField
 from app.db.models.extraction_result import ExtractionResult
 from app.db.models.processing_job import ProcessingJob
-from app.db.session import AsyncSessionLocal, get_async_db
-from app.processing.stage_registry import StageRegistry
+from app.db.session import get_async_db
+from app.execution.queue.broker import Broker
 from app.services.processing.processing_service import ProcessingService
 from app.services.processing.review_service import ReviewService
 from app.services.processing.validation_service import ValidationService
@@ -406,35 +404,14 @@ class ProcessingAggregateResponse(BaseModel):
 # ============================================================================
 
 
-def get_stage_registry(
-    request: Request,
-) -> StageRegistry:
-    """Get the application StageRegistry."""
-
-    registry = getattr(
-        request.app.state,
-        "stage_registry",
-        None,
-    )
-
-    if registry is None:
-        raise RuntimeError(
-            "Document processing StageRegistry has not been initialized."
-        )
-
-    return registry
-
-
 def get_processing_service(
     db: AsyncSession = Depends(get_async_db),
-    stage_registry: StageRegistry = Depends(get_stage_registry),
     storage_service: StorageService = Depends(get_storage_service),
 ) -> ProcessingService:
-    """Build ProcessingService."""
+    """Build a lightweight ProcessingService for job creation."""
 
     return ProcessingService(
         db=db,
-        stage_registry=stage_registry,
         storage_service=storage_service,
     )
 
@@ -457,53 +434,6 @@ def get_review_service(
     return ReviewService(
         db=db,
     )
-
-
-# ============================================================================
-# BACKGROUND PROCESSING
-# ============================================================================
-
-
-async def _run_processing_job_in_background(
-    job_id: UUID,
-    stage_registry: StageRegistry,
-    storage_service: StorageService,
-) -> None:
-    """
-    Execute processing using an independent database session.
-
-    Never reuse the request-scoped AsyncSession here.
-    """
-
-    logger.info(
-        "Starting background processing job",
-        extra={
-            "processing_job_id": str(job_id),
-        },
-    )
-
-    async with AsyncSessionLocal() as db:
-
-        service = ProcessingService(
-            db=db,
-            stage_registry=stage_registry,
-            storage_service=storage_service,
-        )
-
-        try:
-
-            await service.execute_processing_job(
-                job_id=job_id,
-            )
-
-        except Exception:
-
-            logger.exception(
-                "Background processing job failed",
-                extra={
-                    "processing_job_id": str(job_id),
-                },
-            )
 
 
 # ============================================================================
@@ -1252,15 +1182,8 @@ async def _load_review(
 )
 async def start_processing(
     request: ProcessingRequest,
-    background_tasks: BackgroundTasks,
     service: ProcessingService = Depends(
         get_processing_service,
-    ),
-    stage_registry: StageRegistry = Depends(
-        get_stage_registry,
-    ),
-    storage_service: StorageService = Depends(
-        get_storage_service,
     ),
 ) -> ProcessingResponse:
 
@@ -1305,11 +1228,10 @@ async def start_processing(
 
     if job_status == "queued":
 
-        background_tasks.add_task(
-            _run_processing_job_in_background,
-            job.id,
-            stage_registry,
-            storage_service,
+        broker = Broker()
+        broker.publish(
+            "document_processing",
+            str(job.id),
         )
 
         message = (

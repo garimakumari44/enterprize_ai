@@ -9,6 +9,7 @@ the asynchronous session.
 """
 
 from typing import AsyncGenerator, Generator
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import (
@@ -57,8 +58,7 @@ def get_db() -> Generator[Session, None, None]:
 # Asynchronous Database
 # ============================================================================
 
-# Convert the existing synchronous PostgreSQL URL into
-# an asyncpg URL.
+# Convert the existing PostgreSQL URL into an asyncpg URL.
 #
 # Example:
 #
@@ -67,6 +67,15 @@ def get_db() -> Generator[Session, None, None]:
 # becomes:
 #
 # postgresql+asyncpg://...
+#
+# Neon URLs may contain libpq-specific parameters such as:
+#
+#   sslmode=require
+#   channel_binding=require
+#
+# asyncpg does not accept these as URL connection parameters.
+# They are therefore removed below and TLS is enabled explicitly
+# through connect_args={"ssl": True}.
 
 ASYNC_DATABASE_URL = settings.DATABASE_URL
 
@@ -84,8 +93,34 @@ elif ASYNC_DATABASE_URL.startswith("postgresql://"):
     )
 
 
+# Remove parameters that asyncpg does not accept.
+_parts = urlsplit(ASYNC_DATABASE_URL)
+
+_query = [
+    (key, value)
+    for key, value in parse_qsl(
+        _parts.query,
+        keep_blank_values=True,
+    )
+    if key not in {"sslmode", "channel_binding"}
+]
+
+ASYNC_DATABASE_URL = urlunsplit(
+    (
+        _parts.scheme,
+        _parts.netloc,
+        _parts.path,
+        urlencode(_query),
+        _parts.fragment,
+    )
+)
+
+
 async_engine = create_async_engine(
     ASYNC_DATABASE_URL,
+    connect_args={
+        "ssl": True,
+    },
     pool_pre_ping=True,
 )
 

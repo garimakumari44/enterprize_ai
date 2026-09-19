@@ -19,25 +19,83 @@ services:
       # --------------------------------------------------------
       # Application Security
       # --------------------------------------------------------
-      SECRET_KEY: "T8x7IwvoyrMdBwMB1LO8BDOVm-pnp7GWRxeBbxnHRss5Z3y4jqC38iGAmxDPkwbx8ijQJtpk60ZTzRP65XJp7w"
+      SECRET_KEY: "${SECRET_KEY}"
 
       # --------------------------------------------------------
-      # PostgreSQL
+      # PostgreSQL - Neon
       # --------------------------------------------------------
-      DATABASE_URL: "postgresql+asyncpg://postgres:postgres@postgres:5432/adaptive_rag"
+      DATABASE_URL: "${DATABASE_URL}"
 
       # --------------------------------------------------------
       # Redis
       # --------------------------------------------------------
-      REDIS_URL: "redis://redis:6379/0"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+      REDIS_DB: "0"
 
       # --------------------------------------------------------
       # MinIO / S3-compatible Object Storage
       # --------------------------------------------------------
       MINIO_ENDPOINT: "http://minio:9000"
-      MINIO_ACCESS_KEY: "minioadmin"
-      MINIO_SECRET_KEY: "minioadmin"
-      MINIO_BUCKET: "enterprise-ai"
+      MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY}"
+      MINIO_SECRET_KEY: "${MINIO_SECRET_KEY}"
+      MINIO_BUCKET: "${MINIO_BUCKET}"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+      redis:
+        condition: service_started
+
+      minio:
+        condition: service_healthy
+
+    restart: unless-stopped
+
+
+  # ============================================================
+  # Background Worker - Document Processing
+  # ============================================================
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    container_name: enterprise-ai-worker
+
+    command:
+      - python
+      - -m
+      - app.workers.worker_main
+
+    environment:
+      PYTHONUNBUFFERED: "1"
+
+      # --------------------------------------------------------
+      # Application Security
+      # --------------------------------------------------------
+      SECRET_KEY: "${SECRET_KEY}"
+
+      # --------------------------------------------------------
+      # PostgreSQL - Neon
+      # --------------------------------------------------------
+      DATABASE_URL: "${DATABASE_URL}"
+
+      # --------------------------------------------------------
+      # Redis
+      # --------------------------------------------------------
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+      REDIS_DB: "0"
+
+      # --------------------------------------------------------
+      # MinIO / S3-compatible Object Storage
+      # --------------------------------------------------------
+      MINIO_ENDPOINT: "http://minio:9000"
+      MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY}"
+      MINIO_SECRET_KEY: "${MINIO_SECRET_KEY}"
+      MINIO_BUCKET: "${MINIO_BUCKET}"
 
     depends_on:
       postgres:
@@ -82,7 +140,7 @@ services:
 
 
   # ============================================================
-  # PostgreSQL
+  # PostgreSQL - Local Container
   # ============================================================
   postgres:
     image: postgres:16-alpine
@@ -92,7 +150,7 @@ services:
     environment:
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "postgres"
-      POSTGRES_DB: "adaptive_rag"
+      POSTGRES_DB: "enterprise_ai"
 
     ports:
       - "5432:5432"
@@ -104,7 +162,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "pg_isready -U postgres -d adaptive_rag"
+          "pg_isready -U postgres -d enterprise_ai"
         ]
       interval: 5s
       timeout: 5s
@@ -193,3 +251,5 @@ volumes:
   redis_data:
 
   minio_data:
+
+

@@ -70,6 +70,8 @@ paddleocr>=2.9,<4.0
 openai>=1.40,<3.0
 voyageai>=0.3,<2.0
 cohere>=5.0,<6.0
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.0,<3.0
 sentence-transformers>=3.0,<6.0
 tiktoken>=0.7,<1.0
 numpy>=1.26,<3.0

@@ -114,7 +114,7 @@ class Settings(BaseSettings):
     STORAGE_BASE_PATH: str = "./storage"
 
     # ==========================================================
-    # MinIO
+    # MinIO / S3-Compatible Storage
     # ==========================================================
 
     MINIO_ENDPOINT: str = "http://localhost:9000"
@@ -145,17 +145,25 @@ class Settings(BaseSettings):
     # Embeddings
     # ==========================================================
 
-    EMBEDDING_PROVIDER: str = "openai"
+    # Provider:
+    #   local       -> local BGE-small model
+    #   cohere      -> Cohere remote API
+    #   huggingface -> Hugging Face remote inference
+    #   auto        -> automatic provider selection
+    EMBEDDING_PROVIDER: str = "local"
 
-    EMBEDDING_MODEL: str = "text-embedding-3-small"
+    EMBEDDING_MODEL: str = "BAAI/bge-small-en-v1.5"
 
-    EMBEDDING_DIMENSION: int = 1536
+    EMBEDDING_DEVICE: str = "cpu"
+
+    EMBEDDING_DIMENSION: int = 384
+
+    EMBEDDING_BATCH_SIZE: int = 32
+
+    # Hugging Face remote inference
+    HUGGINGFACE_API_KEY: str | None = None
 
     # ==========================================================
-    # LLM
-    # ==========================================================
-    
-        # ==========================================================
     # LLM
     # ==========================================================
 
@@ -172,166 +180,166 @@ class Settings(BaseSettings):
     LLM_OPENROUTER_MODEL: str = "openrouter/free"
 
     LLM_OPENROUTER_BASE_URL: str = (
-        "https://openrouter.ai/api/v1"
-    )
-
-    LLM_OPENROUTER_HTTP_REFERER: str | None = None
-
-    LLM_OPENROUTER_APP_NAME: str = (
-        "AI Research Assistant"
-    )
-
-    # ----------------------------------------------------------
-    # Generation
-    # ----------------------------------------------------------
-
-    LLM_TEMPERATURE: float = 0.2
-
-    LLM_MAX_TOKENS: int = 1024
-
-    LLM_TOP_P: float = 1.0
-
-    LLM_FREQUENCY_PENALTY: float = 0.0
-
-    LLM_PRESENCE_PENALTY: float = 0.0
-
-    # ----------------------------------------------------------
-    # Runtime
-    # ----------------------------------------------------------
-
-    LLM_TIMEOUT: float = 120.0
-
-    LLM_MAX_RETRIES: int = 3
-
-    LLM_STREAM: bool = True
-
-    LLM_VERIFY_SSL: bool = True
-
-    LLM_PROVIDER: str = "openai"
-
-    LLM_MODEL: str = "gpt-4o-mini"
-
-    OPENAI_API_KEY: str | None = None
-
-    # ==========================================================
-    # OCR
-    # ==========================================================
-
-    OCR_PROVIDER: str = "tesseract"
-
-    # ==========================================================
-    # Retrieval
-    # ==========================================================
-
-    RETRIEVAL_TOP_K: int = 10
-
-    RETRIEVAL_SCORE_THRESHOLD: float = 0.0
-
-    # ==========================================================
-    # Logging
-    # ==========================================================
-
-    LOG_LEVEL: str = "INFO"
-
-    LOG_JSON: bool = False
-
-    # ==========================================================
-    # Validation
-    # ==========================================================
-
-    @field_validator("REDIS_PORT")
-    @classmethod
-    def validate_redis_port(cls, value: int) -> int:
-        if not 1 <= value <= 65535:
-            raise ValueError(
-                "REDIS_PORT must be between 1 and 65535."
-            )
-
-        return value
-
-    @field_validator("MAX_FILE_SIZE_MB")
-    @classmethod
-    def validate_max_file_size(cls, value: int) -> int:
-        if value <= 0:
-            raise ValueError(
-                "MAX_FILE_SIZE_MB must be greater than 0."
-            )
-
-        return value
-
-    @field_validator("CHUNK_SIZE")
-    @classmethod
-    def validate_chunk_size(cls, value: int) -> int:
-        if value <= 0:
-            raise ValueError(
-                "CHUNK_SIZE must be greater than 0."
-            )
-
-        return value
-
-    @field_validator("CHUNK_OVERLAP")
-    @classmethod
-    def validate_chunk_overlap(cls, value: int) -> int:
-        if value < 0:
-            raise ValueError(
-                "CHUNK_OVERLAP cannot be negative."
-            )
-
-        return value
-
-    @field_validator("CHUNK_OVERLAP")
-    @classmethod
-    def validate_chunk_overlap_less_than_chunk_size(
-        cls,
-        value: int,
-        info,
-    ) -> int:
-        chunk_size = info.data.get("CHUNK_SIZE")
-
-        if chunk_size is not None and value >= chunk_size:
-            raise ValueError(
-                "CHUNK_OVERLAP must be smaller than CHUNK_SIZE."
-            )
-
-        return value
-
-    @field_validator("EMBEDDING_DIMENSION")
-    @classmethod
-    def validate_embedding_dimension(
-        cls,
-        value: int,
-    ) -> int:
-        if value <= 0:
-            raise ValueError(
-                "EMBEDDING_DIMENSION must be greater than 0."
-            )
-
-        return value
-
-    @field_validator("RETRIEVAL_TOP_K")
-    @classmethod
-    def validate_retrieval_top_k(
-        cls,
-        value: int,
-    ) -> int:
-        if value <= 0:
-            raise ValueError(
-                "RETRIEVAL_TOP_K must be greater than 0."
-            )
-
-        return value
-
-
-@lru_cache
-def get_settings() -> Settings:
-    """
-    Returns cached application settings.
-
-    The Settings object is created once per process
-    and reused throughout the application.
-    """
-
-    return Settings()
-
-
-settings = get_settings()
+        "https://openrouter.ai/api/v1" 
+    ) 
+ 
+    LLM_OPENROUTER_HTTP_REFERER: str | None = None 
+ 
+    LLM_OPENROUTER_APP_NAME: str = ( 
+        "AI Workflow Orchestration Platform" 
+    ) 
+ 
+    # ---------------------------------------------------------- 
+    # Generation 
+    # ---------------------------------------------------------- 
+ 
+    LLM_TEMPERATURE: float = 0.2 
+ 
+    LLM_MAX_TOKENS: int = 1024 
+ 
+    LLM_TOP_P: float = 1.0 
+ 
+    LLM_FREQUENCY_PENALTY: float = 0.0 
+ 
+    LLM_PRESENCE_PENALTY: float = 0.0 
+ 
+    # ---------------------------------------------------------- 
+    # Runtime 
+    # ---------------------------------------------------------- 
+ 
+    LLM_TIMEOUT: float = 120.0 
+ 
+    LLM_MAX_RETRIES: int = 3 
+ 
+    LLM_STREAM: bool = True 
+ 
+    LLM_VERIFY_SSL: bool = True 
+ 
+    # ---------------------------------------------------------- 
+    # Optional OpenAI 
+    # ---------------------------------------------------------- 
+ 
+    OPENAI_API_KEY: str | None = None 
+ 
+    # ========================================================== 
+    # OCR 
+    # ========================================================== 
+ 
+    OCR_PROVIDER: str = "tesseract" 
+ 
+    # ========================================================== 
+    # Retrieval 
+    # ========================================================== 
+ 
+    RETRIEVAL_TOP_K: int = 10 
+ 
+    RETRIEVAL_SCORE_THRESHOLD: float = 0.0 
+ 
+    # ========================================================== 
+    # Logging 
+    # ========================================================== 
+ 
+    LOG_LEVEL: str = "INFO" 
+ 
+    LOG_JSON: bool = False 
+ 
+    # ========================================================== 
+    # Validation 
+    # ========================================================== 
+ 
+    @field_validator("REDIS_PORT") 
+    @classmethod 
+    def validate_redis_port(cls, value: int) -> int: 
+        if not 1 <= value <= 65535: 
+            raise ValueError( 
+                "REDIS_PORT must be between 1 and 65535." 
+            ) 
+ 
+        return value 
+ 
+    @field_validator("MAX_FILE_SIZE_MB") 
+    @classmethod 
+    def validate_max_file_size(cls, value: int) -> int: 
+        if value <= 0: 
+            raise ValueError( 
+                "MAX_FILE_SIZE_MB must be greater than 0." 
+            ) 
+ 
+        return value 
+ 
+    @field_validator("CHUNK_SIZE") 
+    @classmethod 
+    def validate_chunk_size(cls, value: int) -> int: 
+        if value <= 0: 
+            raise ValueError( 
+                "CHUNK_SIZE must be greater than 0." 
+            ) 
+ 
+        return value 
+ 
+    @field_validator("CHUNK_OVERLAP") 
+    @classmethod 
+    def validate_chunk_overlap(cls, value: int) -> int: 
+        if value < 0: 
+            raise ValueError( 
+                "CHUNK_OVERLAP cannot be negative." 
+            ) 
+ 
+        return value 
+ 
+    @field_validator("CHUNK_OVERLAP") 
+    @classmethod 
+    def validate_chunk_overlap_less_than_chunk_size( 
+        cls, 
+        value: int, 
+        info, 
+    ) -> int: 
+        chunk_size = info.data.get("CHUNK_SIZE") 
+ 
+        if chunk_size is not None and value >= chunk_size: 
+            raise ValueError( 
+                "CHUNK_OVERLAP must be smaller than CHUNK_SIZE." 
+            ) 
+ 
+        return value 
+ 
+    @field_validator("EMBEDDING_DIMENSION") 
+    @classmethod 
+    def validate_embedding_dimension( 
+        cls, 
+        value: int, 
+    ) -> int: 
+        if value <= 0: 
+            raise ValueError( 
+                "EMBEDDING_DIMENSION must be greater than 0." 
+            ) 
+ 
+        return value 
+ 
+    @field_validator("RETRIEVAL_TOP_K") 
+    @classmethod 
+    def validate_retrieval_top_k( 
+        cls, 
+        value: int, 
+    ) -> int: 
+        if value <= 0: 
+            raise ValueError( 
+                "RETRIEVAL_TOP_K must be greater than 0." 
+            ) 
+ 
+        return value 
+ 
+ 
+@lru_cache 
+def get_settings() -> Settings: 
+    """ 
+    Returns cached application settings. 
+ 
+    The Settings object is created once per process 
+    and reused throughout the application. 
+    """ 
+ 
+    return Settings() 
+ 
+ 
+settings = get_settings()  
