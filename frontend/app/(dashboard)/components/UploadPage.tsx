@@ -1,7 +1,7 @@
+
 "use client";
 
 import {
-  useEffect,
   useRef,
   useState,
 } from "react";
@@ -14,7 +14,6 @@ import {
   Zap,
   AlertCircle,
   Loader2,
-  RefreshCw,
 } from "lucide-react";
 
 import { Card } from "./ui/Card";
@@ -34,13 +33,6 @@ const API_BASE_URL =
    Types
    ============================================================ */
 
-type Workflow = {
-  id: string;
-  name: string;
-  description?: string;
-  is_active?: boolean;
-};
-
 type StagedFile = {
   file: File;
   name: string;
@@ -49,12 +41,6 @@ type StagedFile = {
   documentId?: string;
   jobId?: string | null;
   error?: string;
-};
-
-type WorkflowResponse = {
-  items?: Workflow[];
-  workflows?: Workflow[];
-  data?: Workflow[];
 };
 
 /* ============================================================
@@ -75,23 +61,6 @@ function formatFileSize(size: number): string {
   }
 
   return `${(size / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-}
-
-function getAuthHeaders(): HeadersInit {
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("accessToken")
-      : null;
-
-  const headers: HeadersInit = {
-    Accept: "application/json",
-  };
-
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  return headers;
 }
 
 /* ============================================================
@@ -147,8 +116,7 @@ function getUploadError(error: unknown): string {
       message?: string;
     };
 
-    const responseData =
-      axiosError.response?.data;
+    const responseData = axiosError.response?.data;
 
     const detail = responseData?.detail;
 
@@ -263,60 +231,6 @@ function getUploadError(error: unknown): string {
 }
 
 /* ============================================================
-   Fetch Workflows
-   ============================================================ */
-
-async function fetchWorkflows(): Promise<Workflow[]> {
-  const response = await fetch(
-    `${API_BASE_URL}/workflows`,
-    {
-      method: "GET",
-      headers: getAuthHeaders(),
-      credentials: "include",
-      cache: "no-store",
-    }
-  );
-
-  if (!response.ok) {
-    let message = `Failed to load workflows (${response.status})`;
-
-    try {
-      const data = await response.json();
-
-      if (
-        typeof data?.detail === "string"
-      ) {
-        message = data.detail;
-      } else if (
-        typeof data?.message === "string"
-      ) {
-        message = data.message;
-      }
-    } catch {
-      // Ignore invalid JSON responses.
-    }
-
-    throw new Error(message);
-  }
-
-  const data:
-    | WorkflowResponse
-    | Workflow[] =
-    await response.json();
-
-  if (Array.isArray(data)) {
-    return data;
-  }
-
-  return (
-    data.items ??
-    data.workflows ??
-    data.data ??
-    []
-  );
-}
-
-/* ============================================================
    Component
    ============================================================ */
 
@@ -332,135 +246,8 @@ export function UploadPage() {
   const [files, setFiles] =
     useState<StagedFile[]>([]);
 
-  const [workflows, setWorkflows] =
-    useState<Workflow[]>([]);
-
-  const [selectedWorkflow, setSelectedWorkflow] =
-    useState("");
-
-  const [loadingWorkflows, setLoadingWorkflows] =
-    useState(true);
-
-  const [workflowError, setWorkflowError] =
-    useState<string | null>(null);
-
   const [uploading, setUploading] =
     useState(false);
-
-  /* ============================================================
-     Load Workflows
-     ============================================================ */
-
-  const loadWorkflows = async () => {
-    try {
-      setLoadingWorkflows(true);
-      setWorkflowError(null);
-
-      const data = await fetchWorkflows();
-
-      const activeWorkflows = data.filter(
-        (workflow) =>
-          workflow.is_active !== false
-      );
-
-      setWorkflows(activeWorkflows);
-
-      setSelectedWorkflow((current) => {
-        const stillExists =
-          current &&
-          activeWorkflows.some(
-            (workflow) =>
-              workflow.id === current
-          );
-
-        if (stillExists) {
-          return current;
-        }
-
-        return (
-          activeWorkflows[0]?.id ?? ""
-        );
-      });
-    } catch (error) {
-      console.error(
-        "Failed to load workflows:",
-        error
-      );
-
-      setWorkflowError(
-        error instanceof Error
-          ? error.message
-          : "Failed to load workflows"
-      );
-
-      setWorkflows([]);
-      setSelectedWorkflow("");
-    } finally {
-      setLoadingWorkflows(false);
-    }
-  };
-
-  /* ============================================================
-     Initial Workflow Load
-     ============================================================ */
-
-  useEffect(() => {
-    let mounted = true;
-
-    const initialize = async () => {
-      try {
-        setLoadingWorkflows(true);
-        setWorkflowError(null);
-
-        const data =
-          await fetchWorkflows();
-
-        if (!mounted) {
-          return;
-        }
-
-        const activeWorkflows =
-          data.filter(
-            (workflow) =>
-              workflow.is_active !== false
-          );
-
-        setWorkflows(activeWorkflows);
-
-        setSelectedWorkflow(
-          activeWorkflows[0]?.id ?? ""
-        );
-      } catch (error) {
-        if (!mounted) {
-          return;
-        }
-
-        console.error(
-          "Failed to load workflows:",
-          error
-        );
-
-        setWorkflowError(
-          error instanceof Error
-            ? error.message
-            : "Failed to load workflows"
-        );
-
-        setWorkflows([]);
-        setSelectedWorkflow("");
-      } finally {
-        if (mounted) {
-          setLoadingWorkflows(false);
-        }
-      }
-    };
-
-    initialize();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   /* ============================================================
      Stage Files
@@ -512,7 +299,7 @@ export function UploadPage() {
   };
 
   /* ============================================================
-     Upload Files
+     Upload / Process Files
      ============================================================ */
 
   const process = async () => {
@@ -528,24 +315,6 @@ export function UploadPage() {
       );
 
     if (pendingFiles.length === 0) {
-      return;
-    }
-
-    if (!selectedWorkflow) {
-      setFiles((previous) =>
-        previous.map((file) =>
-          file.status === "ready" ||
-          file.status === "failed"
-            ? {
-                ...file,
-                status: "failed",
-                error:
-                  "Please select an AI workflow before uploading.",
-              }
-            : file
-        )
-      );
-
       return;
     }
 
@@ -571,6 +340,11 @@ export function UploadPage() {
         try {
           /*
            * uploadDocument() accepts the File object.
+           *
+           * The backend creates the processing job using
+           * the canonical document-processing pipeline.
+           *
+           * No workflow ID is required.
            */
           const response =
             await uploadDocument(
@@ -610,7 +384,6 @@ export function UploadPage() {
           );
 
           /*
-           * IMPORTANT:
            * errorMessage is guaranteed to be
            * a string, so React can safely render it.
            */
@@ -679,17 +452,12 @@ export function UploadPage() {
         file.status === "failed"
     );
 
+  /*
+   * Processing is independent of the workflow subsystem.
+   */
   const canProcess =
     !uploading &&
-    !loadingWorkflows &&
-    Boolean(selectedWorkflow) &&
     hasPendingFiles;
-
-  const selectedWorkflowObject =
-    workflows.find(
-      (workflow) =>
-        workflow.id === selectedWorkflow
-    );
 
   /* ============================================================
      Render
@@ -787,141 +555,6 @@ export function UploadPage() {
       </Card>
 
       {/* ======================================================
-          Workflow Selector
-          ====================================================== */}
-
-      <Card className="p-5">
-        <div className="mb-2 flex items-center justify-between">
-          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400">
-            Select AI Workflow
-          </label>
-
-          {!loadingWorkflows && (
-            <button
-              type="button"
-              onClick={loadWorkflows}
-              disabled={uploading}
-              className="flex items-center gap-1 text-xs text-slate-400 transition-colors hover:text-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <RefreshCw size={12} />
-              Refresh
-            </button>
-          )}
-        </div>
-
-        {loadingWorkflows ? (
-          <div className="flex items-center gap-2 rounded-lg border border-slate-200 p-4 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-            <Loader2
-              size={16}
-              className="animate-spin"
-            />
-            Loading workflows...
-          </div>
-        ) : workflowError ? (
-          <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 dark:border-rose-500/20 dark:bg-rose-500/10">
-            <div className="flex items-start gap-2 text-sm text-rose-600 dark:text-rose-400">
-              <AlertCircle
-                size={16}
-                className="mt-0.5 shrink-0"
-              />
-
-              <div>
-                <div className="font-medium">
-                  Unable to load workflows
-                </div>
-
-                <div className="mt-1 text-xs opacity-80">
-                  {workflowError}
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={loadWorkflows}
-              disabled={loadingWorkflows}
-              className="mt-3 flex items-center gap-1.5 text-xs font-medium text-rose-600 hover:text-rose-700 dark:text-rose-400"
-            >
-              <RefreshCw size={12} />
-              Try again
-            </button>
-          </div>
-        ) : workflows.length === 0 ? (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/20 dark:bg-amber-500/10">
-            <div className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
-              <AlertCircle
-                size={16}
-                className="mt-0.5 shrink-0"
-              />
-
-              <div>
-                <div className="font-medium">
-                  No active workflows
-                </div>
-
-                <div className="mt-1 text-xs opacity-80">
-                  Create or activate a workflow
-                  before processing documents.
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-              {workflows.map(
-                (workflow) => (
-                  <button
-                    key={workflow.id}
-                    type="button"
-                    disabled={uploading}
-                    onClick={() =>
-                      setSelectedWorkflow(
-                        workflow.id
-                      )
-                    }
-                    className={`rounded-lg border p-3 text-left transition-all ${
-                      selectedWorkflow ===
-                      workflow.id
-                        ? "border-cyan-400 bg-cyan-50 ring-1 ring-cyan-400/20 dark:border-cyan-500/40 dark:bg-cyan-500/10"
-                        : "border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600"
-                    } ${
-                      uploading
-                        ? "cursor-not-allowed opacity-60"
-                        : ""
-                    }`}
-                  >
-                    <div className="text-sm font-medium text-slate-800 dark:text-white">
-                      {workflow.name}
-                    </div>
-
-                    {workflow.description && (
-                      <div className="mt-1 line-clamp-2 text-[11px] text-slate-400">
-                        {
-                          workflow.description
-                        }
-                      </div>
-                    )}
-                  </button>
-                )
-              )}
-            </div>
-
-            {selectedWorkflowObject && (
-              <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
-                Selected workflow:{" "}
-                <span className="font-medium text-slate-700 dark:text-slate-200">
-                  {
-                    selectedWorkflowObject.name
-                  }
-                </span>
-              </div>
-            )}
-          </>
-        )}
-      </Card>
-
-      {/* ======================================================
           Staged Files
           ====================================================== */}
 
@@ -936,14 +569,10 @@ export function UploadPage() {
                   : "files"}
               </h3>
 
-              {selectedWorkflowObject && (
-                <p className="mt-0.5 text-xs text-slate-400">
-                  Workflow:{" "}
-                  {
-                    selectedWorkflowObject.name
-                  }
-                </p>
-              )}
+              <p className="mt-0.5 text-xs text-slate-400">
+                Documents are processed using the
+                canonical AI processing pipeline.
+              </p>
             </div>
 
             <Button
@@ -1024,48 +653,48 @@ export function UploadPage() {
                     {file.status ===
                       "ready" &&
                       !uploading && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            removeFile(
-                              index
-                            )
-                          }
-                          className="text-slate-400 transition-colors hover:text-rose-500"
-                          aria-label={`Remove ${file.name}`}
-                        >
-                          <X size={16} />
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          removeFile(
+                            index
+                          )
+                        }
+                        className="text-slate-400 transition-colors hover:text-rose-500"
+                        aria-label={`Remove ${file.name}`}
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
                   </div>
 
                   {file.status ===
                     "failed" &&
                     file.error && (
-                      <div className="mt-2 rounded-md bg-rose-50 px-2.5 py-2 text-xs text-rose-500 dark:bg-rose-500/10 dark:text-rose-400">
-                        {file.error}
-                      </div>
-                    )}
+                    <div className="mt-2 rounded-md bg-rose-50 px-2.5 py-2 text-xs text-rose-500 dark:bg-rose-500/10 dark:text-rose-400">
+                      {file.error}
+                    </div>
+                  )}
 
                   {file.status ===
                     "done" &&
                     file.jobId && (
-                      <div className="mt-2 text-[11px] text-slate-400">
-                        Processing job created:{" "}
-                        <span className="font-mono text-slate-500 dark:text-slate-300">
-                          {file.jobId}
-                        </span>
-                      </div>
-                    )}
+                    <div className="mt-2 text-[11px] text-slate-400">
+                      Processing job created:{" "}
+                      <span className="font-mono text-slate-500 dark:text-slate-300">
+                        {file.jobId}
+                      </span>
+                    </div>
+                  )}
 
                   {file.status ===
                     "done" &&
                     !file.jobId && (
-                      <div className="mt-2 text-[11px] text-emerald-500">
-                        Document uploaded
-                        successfully.
-                      </div>
-                    )}
+                    <div className="mt-2 text-[11px] text-emerald-500">
+                      Document uploaded
+                      successfully.
+                    </div>
+                  )}
                 </div>
               )
             )}
@@ -1131,3 +760,4 @@ export function UploadPage() {
     </div>
   );
 }
+
