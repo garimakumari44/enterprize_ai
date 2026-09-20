@@ -109,7 +109,7 @@ class Settings(BaseSettings):
 
     STORAGE_BACKEND: str = "minio"
 
-    STORAGE_BUCKET: str = "documents"
+    STORAGE_BUCKET: str = "enterprise-ai"
 
     STORAGE_BASE_PATH: str = "./storage"
 
