@@ -136,7 +136,7 @@ downloads/
 tmp/
 temp/
 
-storage/
+/backend/storage/
 generated/
 artifacts/
 
