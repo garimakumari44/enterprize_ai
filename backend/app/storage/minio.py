@@ -1,3 +1,4 @@
+
 """
 app/storage/minio.py
 
@@ -11,7 +12,7 @@ of using this provider directly.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import timezone
 from typing import BinaryIO, Mapping, Optional
 
 import boto3
@@ -25,6 +26,15 @@ from app.storage.models import ObjectMetadata, UploadResult
 class MinIOProvider(StorageProvider):
     """
     MinIO/S3-compatible implementation of StorageProvider.
+
+    This provider works with:
+    - Local MinIO
+    - Backblaze B2 S3-compatible API
+    - Other S3-compatible object storage providers
+
+    Buckets are provisioned outside the application.
+    The application only verifies that the configured bucket
+    exists and is accessible.
     """
 
     def __init__(
@@ -38,7 +48,7 @@ class MinIOProvider(StorageProvider):
         secure: bool = False,
     ) -> None:
         """
-        Initialize the MinIO provider.
+        Initialize the MinIO/S3-compatible provider.
         """
 
         # ------------------------------------------------------------------
@@ -116,11 +126,16 @@ class MinIOProvider(StorageProvider):
         bucket: str,
     ) -> None:
         """
-        Ensure that the specified bucket exists.
+        Verify that the specified bucket exists and is accessible.
 
-        If the bucket exists, nothing happens.
+        Buckets are provisioned outside the application.
 
-        If the bucket does not exist, it is created.
+        IMPORTANT:
+            This method deliberately does NOT create buckets.
+
+        This is important for production S3-compatible providers such as
+        Backblaze B2, where the application's credentials may be restricted
+        to an existing bucket and may not have bucket-creation permission.
         """
 
         if not bucket or not bucket.strip():
@@ -135,6 +150,7 @@ class MinIOProvider(StorageProvider):
                 Bucket=bucket,
             )
 
+            # Bucket exists and the credentials can access it.
             return
 
         except ClientError as exc:
@@ -147,29 +163,42 @@ class MinIOProvider(StorageProvider):
                 error.get("Code", "")
             )
 
-            # Bucket exists but access is denied.
-            # Do NOT attempt to create it.
+            # --------------------------------------------------------------
+            # Bucket exists but credentials do not have access.
+            # --------------------------------------------------------------
+
             if error_code in {
                 "403",
                 "AccessDenied",
             }:
-                raise
+                raise RuntimeError(
+                    f"Storage bucket '{bucket}' exists but is not "
+                    "accessible with the configured credentials."
+                ) from exc
 
+            # --------------------------------------------------------------
             # Bucket does not exist.
-            if error_code not in {
+            # --------------------------------------------------------------
+
+            if error_code in {
                 "404",
                 "NoSuchBucket",
                 "NotFound",
             }:
-                raise
+                raise RuntimeError(
+                    f"Storage bucket '{bucket}' does not exist. "
+                    "Create the bucket in the storage provider before "
+                    "using the application."
+                ) from exc
 
-        # ------------------------------------------------------------------
-        # Create bucket
-        # ------------------------------------------------------------------
+            # --------------------------------------------------------------
+            # Any other storage error.
+            # --------------------------------------------------------------
 
-        self.client.create_bucket(
-            Bucket=bucket,
-        )
+            raise RuntimeError(
+                f"Unable to access storage bucket '{bucket}'. "
+                f"S3 error code: {error_code or 'unknown'}."
+            ) from exc
 
     # ======================================================================
     # Upload
@@ -185,7 +214,7 @@ class MinIOProvider(StorageProvider):
         metadata: Optional[Mapping[str, str]] = None,
     ) -> UploadResult:
         """
-        Upload an object to MinIO.
+        Upload an object to MinIO/S3-compatible storage.
         """
 
         if not bucket or not bucket.strip():
@@ -202,7 +231,7 @@ class MinIOProvider(StorageProvider):
         key = key.lstrip("/")
 
         # ------------------------------------------------------------------
-        # Make sure bucket exists
+        # Verify bucket exists and is accessible
         # ------------------------------------------------------------------
 
         self.ensure_bucket(
@@ -605,8 +634,8 @@ class MinIOProvider(StorageProvider):
 
     def health_check(self) -> bool:
         """
-        Check whether MinIO is reachable and the configured
-        bucket is accessible.
+        Check whether the S3-compatible storage is reachable and the
+        configured bucket is accessible.
         """
 
         try:
@@ -621,3 +650,4 @@ class MinIOProvider(StorageProvider):
             ClientError,
         ):
             return False
+
