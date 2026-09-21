@@ -5,12 +5,14 @@
 **A production-oriented enterprise AI application powered by a reusable AI Workflow Orchestration Platform.**
 
 <p align="center">
-  <img src="docs/vid/enterprise_gif.gif" alt="Enterprise Document Intelligence Demo" width="900">
+  <img src="docs/vid/enterprize_gif.gif" alt="Enterprise Document Intelligence Demo" width="900">
 </p>
 
 <p align="center">
   <strong>Document → Process → Extract → Validate → Retrieve → Orchestrate → Review → Result</strong>
 </p>
+
+---
 
 ## Overview
 
@@ -38,8 +40,8 @@ The overall workflow follows:
 
 **Document Ingestion → Processing → Extraction → Validation → Knowledge Base → AI Workflow → Human Review → Final Result**
 
+---
 
-**Enterprise Document Intelligence addresses this by bringing document processing, knowledge retrieval, AI workflows, and enterprise controls together on a reusable orchestration platform.**
 ## Problem
 
 Enterprise documents contain valuable information, but processing them reliably often requires multiple disconnected systems.
@@ -70,6 +72,9 @@ flowchart TD
 ```
 
 This fragmentation makes it difficult to build consistent, reusable, and observable document workflows across different enterprise use cases.
+
+---
+
 ## Solution
 
 Enterprise Document Intelligence brings document processing, knowledge retrieval, AI reasoning, and workflow automation together through a reusable **AI Workflow Orchestration Platform**.
@@ -79,22 +84,22 @@ Instead of building separate pipelines for every document use case, application 
 ```mermaid
 flowchart TD
     A[Enterprise Documents] --> B[Document Ingestion]
-
     B --> C[AI Workflow Orchestration Platform]
 
     C --> D[Document Processing]
     C --> E[AI Extraction]
     C --> F[Validation]
-    C --> G[Knowledge Base and RAG]
+    C --> G[Knowledge Base]
     C --> H[AI Analysis]
     C --> I[Human Review]
 
     D --> J[Structured Information]
     E --> J
     F --> J
+    I --> J
+
     G --> K[Retrieved Context]
     H --> K
-    I --> J
 
     J --> L[Actionable Results]
     K --> L
@@ -129,6 +134,8 @@ Infrastructure
 ```
 
 This architecture makes the platform **modular, reusable, and extensible**, allowing new enterprise workflows to be developed without rebuilding the underlying AI and document-processing infrastructure.
+
+---
 
 ## Key Capabilities
 
@@ -178,6 +185,9 @@ flowchart TD
 | **Knowledge Intelligence** | Chunking, embeddings, semantic search, keyword search, hybrid retrieval, RAG                                   |
 | **Workflow Orchestration** | Reusable workflows, composable nodes, conditional execution, background jobs, execution tracking, human review |
 | **Enterprise Platform**    | REST APIs, authentication, multi-tenancy, RBAC, audit logging, persistent storage                              |
+
+---
+
 ## End-to-End Document Processing
 
 Documents move through a configurable processing pipeline that transforms unstructured files into validated, searchable, and actionable information.
@@ -190,6 +200,7 @@ flowchart LR
     D --> E[Document Parsing]
     E --> F[Information Extraction]
     F --> G[Validation]
+
     G --> H{Validation Passed}
 
     H -->|Yes| I[Structured Result]
@@ -221,99 +232,9 @@ flowchart LR
 <p align="center">
   <img src="docs/img/document_processing_pipeline.png" alt="Enterprise Document Processing Pipeline" width="950">
 </p>
-```
 
-Next is **`## AI Workflow Orchestration`** — this is an important section because it explains the reusable engine underneath the Enterprise Document Intelligence application.
-## Project Structure
+---
 
-```text
-enterprise-ai/
-│
-├── backend/
-│   ├── app/
-│   │   ├── api/                 # REST API routes
-│   │   ├── assistant/           # AI assistant orchestration
-│   │   ├── analytics/           # Usage and system analytics
-│   │   ├── audit/               # Audit logging
-│   │   ├── classifiers/         # Document classification
-│   │   ├── comparison/          # Document and result comparison
-│   │   ├── confidence/          # Confidence scoring
-│   │   ├── extractors/          # Structured information extraction
-│   │   ├── knowledge/           # Knowledge base and retrieval
-│   │   ├── ocr/                 # OCR and document text extraction
-│   │   ├── processing/          # Document processing pipelines
-│   │   ├── storage/             # Document and artifact storage
-│   │   ├── validators/          # Validation and verification
-│   │   ├── workers/             # Background job execution
-│   │   └── workflows/           # AI workflow orchestration engine
-│   │
-│   ├── alembic/                 # Database migrations
-│   ├── scripts/                 # Operational and utility scripts
-│   ├── tests/                   # Backend test suite
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   └── .env.example
-│
-├── frontend/
-│   ├── app/                     # Next.js application routes
-│   ├── components/              # Reusable UI components
-│   ├── context/                 # Application state and providers
-│   ├── lib/                     # API clients and frontend utilities
-│   ├── public/                  # Static assets
-│   └── types/                   # TypeScript types
-│
-├── docs/
-│   ├── architecture.md
-│   ├── document-processing.md
-│   ├── workflow-engine.md
-│   ├── ai-knowledge-base.md
-│   ├── security-multitenancy.md
-│   ├── deployment.md
-│   ├── img/                     # Architecture and system diagrams
-│   └── vid/                     # Demo videos
-│
-├── docker-compose.yml
-└── README.md
-```
-
-### Architecture Layers
-
-```mermaid
-flowchart TD
-    A[Frontend] --> B[FastAPI API Layer]
-    B --> C[Application Services]
-    C --> D[AI Workflow Engine]
-    C --> E[Document Processing]
-    C --> F[Knowledge and Retrieval]
-
-    D --> G[Background Workers]
-    E --> G
-    F --> G
-
-    G --> H[PostgreSQL]
-    G --> I[Redis]
-    G --> J[Object Storage]
-```
-
-The repository is organized around a clear separation between the **application layer**, the reusable **AI workflow and processing engine**, and the underlying **infrastructure layer**.
-## Technology Stack
-
-| Layer                     | Technologies                             |
-| ------------------------- | ---------------------------------------- |
-| **Frontend**              | Next.js, React, TypeScript, Tailwind CSS |
-| **Backend**               | FastAPI, Python                          |
-| **Database**              | PostgreSQL                               |
-| **Cache & Jobs**          | Redis                                    |
-| **Document Storage**      | Object Storage                           |
-| **AI / LLM**              | LLM provider integrations                |
-| **Embeddings**            | BAAI BGE-small                           |
-| **Retrieval**             | Semantic, keyword, and hybrid retrieval  |
-| **Workflow Engine**       | Custom AI workflow orchestration         |
-| **Background Processing** | Asynchronous workers                     |
-| **Database Migrations**   | Alembic                                  |
-| **API**                   | REST / JSON                              |
-| **Deployment**            | Docker, Docker Compose                   |
-| **Testing**               | Pytest                                   |
 ## AI Workflow Orchestration
 
 The **AI Workflow Orchestration Platform** provides the reusable execution layer behind Enterprise Document Intelligence.
@@ -324,21 +245,21 @@ Instead of implementing each document use case as an isolated pipeline, workflow
 flowchart TD
     A[Workflow Definition] --> B[Workflow Engine]
 
-    B --> C[Input Node]
-    C --> D[Processing Node]
-    D --> E[Classification Node]
-    E --> F[Extraction Node]
-    F --> G[Validation Node]
+    B --> C[Input]
+    C --> D[Processing]
+    D --> E[Classification]
+    E --> F[Extraction]
+    F --> G[Validation]
 
     G --> H{Condition}
 
-    H -->|Valid| I[Knowledge Node]
-    H -->|Review Required| J[Human Review Node]
+    H -->|Valid| I[Knowledge Retrieval]
+    H -->|Review Required| J[Human Review]
 
-    I --> K[AI Analysis Node]
+    I --> K[AI Analysis]
     J --> K
 
-    K --> L[Output Node]
+    K --> L[Output]
 
     B --> M[Execution State]
     B --> N[Background Worker]
@@ -415,6 +336,8 @@ New workflows can therefore be assembled from existing capabilities rather than 
   <img src="docs/img/enterprise.png" alt="Enterprise AI Workflow Platform" width="950">
 </p>
 
+---
+
 ## Knowledge Base & RAG
 
 The platform converts processed documents into a searchable knowledge layer that supports semantic retrieval and AI-assisted analysis.
@@ -462,6 +385,8 @@ The knowledge base provides the retrieval foundation for document-aware AI workf
 * Metadata-aware filtering
 * Context construction for downstream AI processing
 
+---
+
 ## Application Workflows
 
 Enterprise Document Intelligence provides reusable AI workflows for common enterprise document use cases.
@@ -476,15 +401,15 @@ flowchart TD
 
     C --> C1[Extract Fields and Tables]
     C1 --> C2[Validate Information]
-    C2 --> C3[Generate Structured Result]
+    C2 --> C3[Structured Result]
 
     D --> D1[Extract Clauses and Entities]
     D1 --> D2[Analyze Obligations and Risks]
-    D2 --> D3[Generate Contract Findings]
+    D2 --> D3[Contract Findings]
 
     E --> E1[Extract Candidate Information]
     E1 --> E2[Analyze Skills and Experience]
-    E2 --> E3[Generate Candidate Profile]
+    E2 --> E3[Candidate Profile]
 
     C3 --> F[AI Workflow Platform]
     D3 --> F
@@ -537,6 +462,9 @@ Transforms resumes into structured candidate information containing relevant ski
 All three workflows use the same underlying platform capabilities:
 
 **Document Processing → Extraction → Validation → Retrieval → AI Analysis → Workflow Execution → Structured Results**
+
+---
+
 ## System Architecture
 
 Enterprise Document Intelligence follows a layered architecture that separates the **user-facing application**, **API and business services**, **AI processing and orchestration**, and **infrastructure services**.
@@ -544,42 +472,34 @@ Enterprise Document Intelligence follows a layered architecture that separates t
 ```mermaid
 flowchart TD
     A[Next.js Frontend] --> B[FastAPI API]
-
     B --> C[Application Services]
 
-    C --> D[Document Intelligence]
-    C --> E[AI Workflow Engine]
-    C --> F[Knowledge Base and RAG]
+    C --> D[Document Processing]
+    C --> E[Workflow Engine]
+    C --> F[Knowledge Base]
     C --> G[AI Assistant]
-    C --> H[Analytics and Audit]
 
-    D --> I[Background Workers]
-    E --> I
-    F --> I
+    D --> H[Background Workers]
+    E --> H
+    F --> H
 
-    I --> J[Redis]
-    I --> K[PostgreSQL]
-    I --> L[Object Storage]
-
-    F --> M[Embedding and Retrieval]
-    M --> N[Vector and Keyword Indexes]
-
-    E --> O[Workflow Execution State]
-    O --> K
+    H --> I[PostgreSQL]
+    H --> J[Redis]
+    H --> K[Object Storage]
 ```
 
 ### Architecture Layers
 
-| Layer                     | Responsibility                                                                                       |
-| ------------------------- | ---------------------------------------------------------------------------------------------------- |
-| **Frontend**              | Document management, workflow interfaces, AI interaction, results, and analytics                     |
-| **API Layer**             | REST endpoints, authentication, request validation, and API coordination                             |
-| **Application Services**  | Document processing, extraction, validation, knowledge, assistant, analytics, and audit services     |
-| **AI Workflow Engine**    | Reusable workflow definitions, execution, orchestration, and state management                        |
-| **AI & Retrieval Layer**  | Embeddings, semantic retrieval, keyword retrieval, hybrid search, and AI analysis                    |
-| **Background Workers**    | Asynchronous document and workflow processing                                                        |
-| **Data Layer**            | PostgreSQL for structured data, Redis for caching/job coordination, and object storage for documents |
-| **Observability & Audit** | Execution tracking, audit records, processing state, and operational metadata                        |
+| Layer                     | Responsibility                                                                                           |
+| ------------------------- | -------------------------------------------------------------------------------------------------------- |
+| **Frontend**              | Document management, workflow interfaces, AI interaction, results, and analytics                         |
+| **API Layer**             | REST endpoints, authentication, request validation, and API coordination                                 |
+| **Application Services**  | Document processing, extraction, validation, knowledge, assistant, analytics, and audit services         |
+| **AI Workflow Engine**    | Reusable workflow definitions, execution, orchestration, and state management                            |
+| **AI & Retrieval Layer**  | Embeddings, semantic retrieval, keyword retrieval, hybrid search, and AI analysis                        |
+| **Background Workers**    | Asynchronous document and workflow processing                                                            |
+| **Data Layer**            | PostgreSQL for structured data, Redis for caching and job coordination, and object storage for documents |
+| **Observability & Audit** | Execution tracking, audit records, processing state, and operational metadata                            |
 
 <p align="center">
   <img src="docs/img/readme_arch2.png" alt="Enterprise Document Intelligence System Architecture" width="1000">
@@ -588,35 +508,108 @@ flowchart TD
 ### Application-to-Platform Relationship
 
 ```mermaid
-flowchart TB
-    A[Enterprise Document Intelligence] --> B[Application Workflows]
+flowchart TD
+    A[Enterprise Applications] --> B[AI Workflow Platform]
 
-    B --> C[Invoice Processing]
-    B --> D[Contract Analysis]
-    B --> E[Resume Intelligence]
+    A --> C[Invoice Processing]
+    A --> D[Contract Analysis]
+    A --> E[Resume Intelligence]
 
-    C --> F[AI Workflow Orchestration Platform]
-    D --> F
-    E --> F
+    C --> B
+    D --> B
+    E --> B
 
-    F --> G[Document Processing]
-    F --> H[Knowledge and Retrieval]
-    F --> I[AI Services]
-    F --> J[Validation]
-    F --> K[Background Execution]
+    B --> F[Document Processing]
+    B --> G[Knowledge Retrieval]
+    B --> H[AI Services]
+    B --> I[Validation]
+    B --> J[Background Jobs]
 
-    G --> L[Platform Infrastructure]
-    H --> L
-    I --> L
-    J --> L
-    K --> L
-
-    L --> M[PostgreSQL]
-    L --> N[Redis]
-    L --> O[Object Storage]
+    F --> K[Platform Infrastructure]
+    G --> K
+    H --> K
+    I --> K
+    J --> K
 ```
 
 The architecture is designed so that **enterprise applications remain decoupled from the underlying AI execution infrastructure**. The same orchestration and processing capabilities can therefore be reused across multiple document-driven applications.
+
+---
+
+## Project Structure
+
+```text
+enterprise-ai/
+│
+├── backend/
+│   ├── app/
+│   │   ├── api/                 # REST API routes
+│   │   ├── assistant/           # AI assistant orchestration
+│   │   ├── analytics/           # Usage and system analytics
+│   │   ├── audit/               # Audit logging
+│   │   ├── classifiers/         # Document classification
+│   │   ├── comparison/          # Document and result comparison
+│   │   ├── confidence/          # Confidence scoring
+│   │   ├── extractors/          # Structured information extraction
+│   │   ├── knowledge/           # Knowledge base and retrieval
+│   │   ├── ocr/                 # OCR and document text extraction
+│   │   ├── processing/          # Document processing pipelines
+│   │   ├── storage/             # Document and artifact storage
+│   │   ├── validators/          # Validation and verification
+│   │   ├── workers/             # Background job execution
+│   │   └── workflows/           # AI workflow orchestration engine
+│   │
+│   ├── alembic/                 # Database migrations
+│   ├── scripts/                 # Operational and utility scripts
+│   ├── tests/                   # Backend test suite
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── .env.example
+│
+├── frontend/
+│   ├── app/                     # Next.js application routes
+│   ├── components/              # Reusable UI components
+│   ├── context/                 # Application state and providers
+│   ├── lib/                     # API clients and frontend utilities
+│   ├── public/                  # Static assets
+│   └── types/                   # TypeScript types
+│
+├── docs/
+│   ├── architecture.md
+│   ├── document-processing.md
+│   ├── workflow-engine.md
+│   ├── ai-knowledge-base.md
+│   ├── security-multitenancy.md
+│   ├── deployment.md
+│   ├── img/                     # Architecture and system diagrams
+│   └── vid/                     # Demo videos
+│
+├── docker-compose.yml
+└── README.md
+```
+
+---
+
+## Technology Stack
+
+| Layer                     | Technologies                             |
+| ------------------------- | ---------------------------------------- |
+| **Frontend**              | Next.js, React, TypeScript, Tailwind CSS |
+| **Backend**               | FastAPI, Python                          |
+| **Database**              | PostgreSQL                               |
+| **Cache & Jobs**          | Redis                                    |
+| **Document Storage**      | Object Storage                           |
+| **AI / LLM**              | LLM provider integrations                |
+| **Embeddings**            | BAAI BGE-small                           |
+| **Retrieval**             | Semantic, keyword, and hybrid retrieval  |
+| **Workflow Engine**       | Custom AI workflow orchestration         |
+| **Background Processing** | Asynchronous workers                     |
+| **Database Migrations**   | Alembic                                  |
+| **API**                   | REST / JSON                              |
+| **Deployment**            | Docker, Docker Compose                   |
+| **Testing**               | Pytest                                   |
+
+---
 
 ## Quick Start
 
@@ -668,8 +661,6 @@ Open the frontend:
 http://localhost:3000
 ```
 
-The FastAPI backend is available through its configured API port.
-
 FastAPI documentation:
 
 ```text
@@ -693,6 +684,9 @@ docker compose down -v
 For development without Docker, install the backend and frontend dependencies separately, configure the required environment variables, and start the FastAPI and Next.js applications independently.
 
 For detailed deployment and environment configuration, see [`docs/deployment.md`](docs/deployment.md).
+
+---
+
 ## Demo
 
 ### Full Platform Walkthrough
@@ -715,6 +709,8 @@ The original demo video is also included in the repository:
 docs/vid/enterprise.mp4
 ```
 
+---
+
 ## API
 
 The platform exposes a RESTful API through **FastAPI**, providing programmatic access to document processing, AI workflows, knowledge retrieval, authentication, analytics, and enterprise operations.
@@ -735,7 +731,7 @@ The platform exposes a RESTful API through **FastAPI**, providing programmatic a
 ### API Architecture
 
 ```mermaid
-flowchart LR
+flowchart TD
     A[Frontend] --> B[FastAPI REST API]
 
     B --> C[Authentication]
@@ -744,18 +740,17 @@ flowchart LR
     B --> F[Workflows]
     B --> G[Knowledge Base]
     B --> H[AI Assistant]
-    B --> I[Analytics]
-    B --> J[Audit]
 
-    D --> K[Application Services]
-    E --> K
-    F --> K
-    G --> K
-    H --> K
+    C --> I[Application Services]
+    D --> I
+    E --> I
+    F --> I
+    G --> I
+    H --> I
 
-    K --> L[PostgreSQL]
-    K --> M[Redis]
-    K --> N[Object Storage]
+    I --> J[PostgreSQL]
+    I --> K[Redis]
+    I --> L[Object Storage]
 ```
 
 ### Interactive API Documentation
@@ -774,3 +769,50 @@ http://localhost:<BACKEND_PORT>/openapi.json
 
 The API is designed as an **API-first layer**, allowing the frontend and external clients to interact with the same document intelligence and workflow services.
 
+---
+
+## Documentation
+
+Detailed technical documentation is available in the `docs/` directory.
+
+| Documentation                                               | Description                                                |
+| ----------------------------------------------------------- | ---------------------------------------------------------- |
+| [`architecture.md`](docs/architecture.md)                   | System architecture and platform components                |
+| [`document-processing.md`](docs/document-processing.md)     | Document ingestion and processing pipeline                 |
+| [`workflow-engine.md`](docs/workflow-engine.md)             | AI workflow orchestration and execution                    |
+| [`ai-knowledge-base.md`](docs/ai-knowledge-base.md)         | Knowledge base, retrieval, and RAG                         |
+| [`security-multitenancy.md`](docs/security-multitenancy.md) | Security, authentication, authorization, and multi-tenancy |
+| [`deployment.md`](docs/deployment.md)                       | Local and containerized deployment                         |
+
+---
+
+## Engineering Principles
+
+* **Reusable AI infrastructure** — shared capabilities instead of isolated pipelines
+* **Modular architecture** — clear separation between applications, services, and infrastructure
+* **API-first design** — backend capabilities exposed through structured APIs
+* **Asynchronous processing** — long-running document and workflow operations handled through background execution
+* **Retrieval-aware AI** — AI analysis can operate on retrieved document context
+* **Validation and human review** — uncertain processing results can be routed for verification
+* **Traceable execution** — workflows and processing stages maintain execution state and operational metadata
+* **Containerized deployment** — reproducible development and deployment environments
+
+---
+
+## Roadmap
+
+Potential future improvements include:
+
+* Expanded document formats and processing pipelines
+* More workflow node types
+* Advanced evaluation and AI quality metrics
+* Expanded observability and tracing
+* Additional enterprise integrations
+* More configurable human-in-the-loop workflows
+* Advanced workflow versioning and management
+
+---
+
+## License
+
+This project is provided for educational, research, and portfolio purposes.
