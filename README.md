@@ -14,6 +14,17 @@
 
 ---
 
+## 🚀 Live Application
+
+**Live Demo:** [https://enterprize-ai.vercel.app/](https://enterprize-ai.vercel.app/?utm_source=chatgpt.com)
+
+<p align="center">
+  <a href="https://enterprize-ai.vercel.app/">
+    <strong>🌐 Open Enterprise Document Intelligence</strong>
+  </a>
+</p>
+
+
 ## Overview
 
 **Enterprise Document Intelligence** is an AI-powered platform for processing, understanding, searching, and analyzing enterprise documents.
